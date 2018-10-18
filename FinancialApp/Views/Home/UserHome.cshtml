@@ -1,0 +1,85 @@
+﻿
+@{
+    ViewData["Title"] = "UserHome";
+    var myAccounts = ViewData["MyAccounts"] as IEnumerable<FinancialApp.Models.FinanceContext.Account>;
+}
+
+<h2>UserHome</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>
+                Account ID
+            </th>
+            <th>
+                Balance
+            </th>
+            <th>
+                Available
+            </th>
+            <th>
+                Account Type
+            </th>
+        </tr>
+    </thead>
+   
+    <tbody>
+
+        @foreach (var account in myAccounts)
+        {
+            var available = account.Balance + account.Overdraft;
+        <tr>
+            <th>
+                <a asp-controller="Home"
+                   asp-action="Account"
+                   asp-route-id="@account.AccountID">
+                    @account.AccountID
+                </a>
+            </th>
+
+            @if (account.Balance.ToString().EndsWith("00") == true)
+            {
+
+                <td>
+                    @((account.Balance / 100m).ToString("C0")) 
+                </td>
+
+            }
+            else
+            {
+                <td>
+                    @((account.Balance / 100m).ToString("C"))
+                </td>
+            }
+            @if (available.ToString().EndsWith("00") == true)
+            {
+
+                <td>
+                    @((available / 100m).ToString("C0"))
+                </td>
+
+            }
+            else
+            {
+                <td>
+                    @((available / 100m).ToString("C"))
+                </td>
+            }
+            @if (account.DebitOrCredit == true)
+            {
+                <td>
+                    Credit
+                </td>
+            }
+            else
+            {
+                <td>
+                    Debit
+                </td>
+            }
+        </tr>
+        }
+    </tbody>
+
+</table>
+

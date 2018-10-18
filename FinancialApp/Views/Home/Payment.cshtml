@@ -1,0 +1,131 @@
+﻿
+@{
+
+    ViewData["Title"] = "Payment";
+    IEnumerable<FinanceContext.Account> myAccount = null;
+    List<int> availableAccounts = new List<int>();
+    IEnumerable<FinanceContext.Transaction> transactions = null;
+    if (ViewContext.RouteData.Values["filterType"].ToString() == "New")
+    {
+        myAccount = ViewData["MyAccount"] as IEnumerable<FinanceContext.Account>;
+        availableAccounts = ViewData["AvailableAccounts"] as List<int>;
+    }
+    else
+    {
+        transactions = ViewData["Transactions"] as IEnumerable<FinanceContext.Transaction>;
+    }
+}
+
+@if (ViewContext.RouteData.Values["filterType"].ToString() == "New")
+{
+    var available = myAccount.FirstOrDefault().Balance + myAccount.FirstOrDefault().Overdraft;
+    <h2>New Payment</h2>
+    <table class="table-bordered">
+        <thead>
+            <tr>
+                <th>Balance</th>
+                <th>Available</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                @if (myAccount.FirstOrDefault().Balance.ToString().EndsWith("00") == true)
+                {
+
+                    <td>
+                        @((myAccount.FirstOrDefault().Balance / 100m).ToString("C0"))
+                    </td>
+
+                }
+                else
+                {
+                    <td>
+                        @((myAccount.FirstOrDefault().Balance / 100m).ToString("C"))
+                    </td>
+                }
+                @if (available.ToString().EndsWith("00") == true)
+                {
+
+                    <td>
+                        @((available / 100m).ToString("C0"))
+                    </td>
+
+                }
+                else
+                {
+                    <td>
+                        @((available / 100m).ToString("C"))
+                    </td>
+                }
+            </tr>
+        </tbody>
+    </table>
+
+    <form asp-controller="Home" asp-action="MakePayment" method="post">
+        <input type="hidden" name="myAccount" value="@myAccount.FirstOrDefault().AccountID"  /> <br />
+        @Html.DropDownList("ID",
+                            new SelectList((availableAccounts)),
+                            "Select AccountID",
+                            new { @class = "form-control" })
+
+        <input type="text" name="Amount" value="Enter Value" /> <br />
+        <input type="date" name="Date" min="2018-18-10"><br> @*Javascript needed to make this always todays date.*@
+        <input type="checkbox" id ="isRecurring" name="isRecurring" value="True"> Recurring Payment<br>
+        <button type="submit">Submit Payment</button>
+    </form>
+}
+else
+{
+    <h2>Cancel Payment</h2>
+     <table class="table-bordered">
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>To Account</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in transactions)
+            {
+            <tr>
+                <th>
+                    @transaction.TransactionID
+                </th>
+                <td>
+                    @transaction.ToAccountID
+                </td>
+                @if (transaction.Amount.ToString().EndsWith("00") == true)
+                {
+
+                    <td>
+                        @((transaction.Amount / 100m).ToString("C0"))
+                    </td>
+
+                }
+                else
+                {
+                    <td>
+                        @((transaction.Amount / 100m).ToString("C"))
+                    </td>
+                }
+                <td>
+                    @transaction.Date.ToShortDateString()
+                </td>
+                <td>
+                    <form asp-controller="Home" asp-action="CancelPayment" method="post">
+                        <input type="hidden" name="transactionID" value="@transaction.TransactionID" />
+                        <input type="hidden" name="fromID" value="@transaction.FromAccountID" />
+                        <input type="hidden" name="toID" value="@transaction.ToAccountID" />
+                        <input type="hidden" name="Amount" value="@transaction.Amount" />
+                        <button type="submit">Cancel Payment</button>
+                    </form>
+                    
+                </td>
+
+            </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,120 @@
+﻿
+@{
+    ViewData["Title"] = "Account";
+    int myID;
+    int.TryParse(ViewContext.RouteData.Values["id"].ToString(), out myID);
+    string filterType = "";
+    string filterValue = "";
+    if (ViewContext.RouteData.Values["FilterType"] != null)
+    {
+        filterType = ViewContext.RouteData.Values["filterType"].ToString();
+    }
+    if (ViewContext.RouteData.Values["filterValue"] != null)
+    {
+        filterValue = ViewContext.RouteData.Values["filterValue"].ToString();
+    }
+    int tAmmount;
+    var myTransactions = ViewData["MyTransactions"] as IEnumerable<FinancialApp.Models.FinanceContext.Transaction>;
+    var startOfWeek = DateTime.Now.AddDays(DayOfWeek.Monday - DateTime.Now.DayOfWeek);
+    switch (filterType)
+    {
+        case "ByWeek":
+            myTransactions = myTransactions.Where(m => m.Date.Date >= startOfWeek.Date);
+            break;
+        case "ByMonth":
+            myTransactions = myTransactions.Where(m => m.Date.Month.ToString() == ((int)FinanceContext.Months.Parse(typeof(FinanceContext.Months), filterValue)).ToString());
+            break;
+        case "ByYear":
+            myTransactions = myTransactions.Where(m => m.Date.Year.ToString() == filterValue);
+            break;
+        case "ByPaymentType":
+            myTransactions = myTransactions.Where(m => m.IsRecurring == (filterValue == "Recurring"));
+            break;
+        default:
+            myTransactions = ViewData["MyTransactions"] as IEnumerable<FinancialApp.Models.FinanceContext.Transaction>;
+            break;
+    }
+}
+
+<h2>Account @myID</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>
+                Transaction ID
+            </th>
+            <th>
+                With Account
+            </th>
+            <th>
+                Amount
+            </th>
+            <th>
+                Transaction Type
+            </th>
+            <th>
+                Transaction Date
+            </th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var transaction in myTransactions)
+        {
+            <tr>
+                <th>
+                    @transaction.TransactionID
+                </th>
+
+                @if (transaction.ToAccountID == myID) //checks if transation is to "me"
+                {
+                    tAmmount = transaction.Amount;
+                    <td>
+                        @transaction.FromAccountID @*other accounts ID*@
+                    </td>
+                }
+                else
+                {
+                    tAmmount = -transaction.Amount;
+                    <td>
+                        @transaction.ToAccountID
+                    </td>
+                }
+                @if (tAmmount.ToString().EndsWith("00") == true)
+                {
+
+                    <td>
+                        @((tAmmount / 100m).ToString("C0"))
+                    </td>
+
+                }
+                else
+                {
+                    <td>
+                        @((tAmmount / 100m).ToString("C"))
+                    </td>
+                }
+                @if (transaction.IsRecurring == true)
+                {
+                    <td>
+                        Recurring
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        Non-Recurring
+                    </td>
+                }
+                <td>
+                    @transaction.Date
+                </td>
+            </tr>
+        }
+    </tbody>
+
+</table>
+<button onclick="location.href = '@Url.Action("Payment","Home",new { id = myID,filterType = "New"  },null)'" type="button">  Make Payment</button>
+<button onclick="location.href = '@Url.Action("Payment","Home",new { id = myID,filterType = "Cancel" },null)'" type="button">  Cancel Payment</button>
+
